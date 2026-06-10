@@ -1,0 +1,120 @@
+{
+  "name": "apiscraper",
+  "displayName": "APIScraper – Autonomous Website API Analyzer",
+  "description": "Autonomously discover and analyze all APIs/endpoints used by a website (dynamic browser capture + static analysis), and export to OpenAPI, Postman and HAR.",
+  "version": "0.1.0",
+  "publisher": "apiscraper",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0",
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jahdaganj01ki-oss/APIScraper.git"
+  },
+  "categories": [
+    "Other",
+    "Testing",
+    "Visualization"
+  ],
+  "keywords": [
+    "api",
+    "endpoints",
+    "openapi",
+    "swagger",
+    "scraper",
+    "network",
+    "playwright"
+  ],
+  "icon": "media/icon.png",
+  "main": "./dist/extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "commands": [
+      {
+        "command": "apiscraper.open",
+        "title": "APIScraper: Open Analyzer Panel",
+        "category": "APIScraper"
+      },
+      {
+        "command": "apiscraper.analyze",
+        "title": "APIScraper: Analyze Website…",
+        "category": "APIScraper"
+      }
+    ],
+    "configuration": {
+      "title": "APIScraper",
+      "properties": {
+        "apiscraper.crawl.maxDepth": {
+          "type": "number",
+          "default": 1,
+          "minimum": 0,
+          "maximum": 5,
+          "description": "How many link levels deep to crawl from the start URL (0 = only the start page)."
+        },
+        "apiscraper.crawl.maxPages": {
+          "type": "number",
+          "default": 15,
+          "minimum": 1,
+          "maximum": 200,
+          "description": "Maximum number of pages to visit during dynamic crawling."
+        },
+        "apiscraper.dynamic.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use a headless browser (Playwright) to capture live network traffic. Falls back to static analysis if unavailable."
+        },
+        "apiscraper.dynamic.headless": {
+          "type": "boolean",
+          "default": true,
+          "description": "Run the browser in headless mode."
+        },
+        "apiscraper.dynamic.waitMs": {
+          "type": "number",
+          "default": 3500,
+          "minimum": 0,
+          "description": "How long (ms) to wait per page for lazy network requests after load."
+        },
+        "apiscraper.includeThirdParty": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include requests to third-party hosts (not just the start origin)."
+        },
+        "apiscraper.includeStaticAssets": {
+          "type": "boolean",
+          "default": false,
+          "description": "Include static asset requests (images, fonts, css) in the results."
+        },
+        "apiscraper.extraHeaders": {
+          "type": "object",
+          "default": {},
+          "description": "Extra HTTP headers (e.g. Authorization) sent with every request during analysis."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "node esbuild.mjs --production",
+    "watch": "node esbuild.mjs --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint \"src/**/*.ts\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "package": "vsce package --no-dependencies"
+  },
+  "dependencies": {
+    "playwright": "^1.44.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.30",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^7.7.0",
+    "@typescript-eslint/parser": "^7.7.0",
+    "esbuild": "^0.20.2",
+    "eslint": "^8.57.0",
+    "typescript": "^5.4.5",
+    "vitest": "^1.5.0"
+  }
+}
