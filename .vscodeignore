@@ -1,7 +1,6 @@
 .vscode/**
 src/**
 out/**
-node_modules/**
 scripts/**
 docs/**
 .github/**

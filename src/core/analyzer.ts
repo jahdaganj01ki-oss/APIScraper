@@ -60,25 +60,15 @@ export async function analyzeWebsite(
     }
   }
 
-  if (!dynamicUsed || observed.filter((o) => o.source === "dynamic").length === 0) {
-    reporter.setPhase?.("Static source analysis");
-    try {
-      const stat = await staticAnalyze(options, reporter);
-      observed.push(...stat);
-      staticUsed = true;
-    } catch (err) {
-      warnings.push(`Static analysis failed: ${(err as Error).message}`);
-    }
-  } else {
-    // Always complement dynamic with static extraction of the start page.
-    reporter.setPhase?.("Static source analysis");
-    try {
-      const stat = await staticAnalyze(options, reporter);
-      observed.push(...stat);
-      staticUsed = true;
-    } catch (err) {
-      warnings.push(`Static analysis failed: ${(err as Error).message}`);
-    }
+  // Static analysis always runs: as the primary source when dynamic is
+  // unavailable, and as a complement (hidden endpoints in JS bundles) otherwise.
+  reporter.setPhase?.("Static source analysis");
+  try {
+    const stat = await staticAnalyze(options, reporter);
+    observed.push(...stat);
+    staticUsed = true;
+  } catch (err) {
+    warnings.push(`Static analysis failed: ${(err as Error).message}`);
   }
 
   reporter.setPhase?.("Normalizing endpoints");
