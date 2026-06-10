@@ -42,6 +42,10 @@ into a clean, grouped list of endpoints and lets you export to **OpenAPI 3.1**, 
 | `apiscraper.dynamic.enabled` | `true` | Use a headless browser to capture live traffic. |
 | `apiscraper.dynamic.headless` | `true` | Run the browser headless. |
 | `apiscraper.dynamic.waitMs` | `3500` | Wait per page for lazy requests (ms). |
+| `apiscraper.dynamic.storageState` | `""` | Path to a Playwright `storageState` JSON for authenticated runs (cookies/localStorage). |
+| `apiscraper.crawl.respectRobots` | `true` | Honor robots.txt `Disallow` rules while crawling. |
+| `apiscraper.crawl.delayMs` | `250` | Delay between crawled pages (ms) to stay polite. |
+| `apiscraper.graphql.introspection` | `true` | Send an introspection query to discovered GraphQL endpoints. |
 | `apiscraper.includeThirdParty` | `true` | Include requests to third-party hosts. |
 | `apiscraper.includeStaticAssets` | `false` | Include images/fonts/css in the results. |
 | `apiscraper.extraHeaders` | `{}` | Extra headers (e.g. `Authorization`) for every request. |

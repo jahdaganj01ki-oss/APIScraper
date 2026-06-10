@@ -76,6 +76,27 @@
           "minimum": 0,
           "description": "How long (ms) to wait per page for lazy network requests after load."
         },
+        "apiscraper.dynamic.storageState": {
+          "type": "string",
+          "default": "",
+          "description": "Path to a Playwright storageState JSON file (cookies/localStorage) to analyze authenticated areas. Generate it once with `npx playwright open --save-storage=auth.json <url>` after logging in."
+        },
+        "apiscraper.crawl.respectRobots": {
+          "type": "boolean",
+          "default": true,
+          "description": "Honor robots.txt Disallow rules while crawling."
+        },
+        "apiscraper.crawl.delayMs": {
+          "type": "number",
+          "default": 250,
+          "minimum": 0,
+          "description": "Delay (ms) between crawled pages to stay polite and avoid rate limiting."
+        },
+        "apiscraper.graphql.introspection": {
+          "type": "boolean",
+          "default": true,
+          "description": "Send a GraphQL introspection query to discovered GraphQL endpoints to recover their schema."
+        },
         "apiscraper.includeThirdParty": {
           "type": "boolean",
           "default": true,

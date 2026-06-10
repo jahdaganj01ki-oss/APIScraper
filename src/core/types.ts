@@ -86,6 +86,14 @@ export interface AnalyzeOptions {
   includeThirdParty: boolean;
   includeStaticAssets: boolean;
   extraHeaders: Record<string, string>;
+  /** Path to a Playwright storageState JSON file (cookies/localStorage) for authenticated runs. */
+  storageStatePath?: string;
+  /** Honor robots.txt Disallow rules while crawling. */
+  respectRobots: boolean;
+  /** Delay (ms) between crawled pages to be polite / avoid rate limits. */
+  crawlDelayMs: number;
+  /** Send a GraphQL introspection query to discovered GraphQL endpoints. */
+  graphqlIntrospection: boolean;
 }
 
 export interface ProgressReporter {

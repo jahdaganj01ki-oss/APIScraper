@@ -8,7 +8,8 @@ import { buildEndpoints } from "./endpointStore";
 import { dynamicAnalyze } from "./dynamicAnalyzer";
 import { staticAnalyze } from "./staticAnalyzer";
 import { probeWellKnown } from "./wellKnown";
-import { safeParseUrl } from "./urlUtils";
+import { introspectGraphql } from "./graphql";
+import { classifyApiKind, safeParseUrl } from "./urlUtils";
 
 export interface AnalyzeRunOptions {
   reporter: ProgressReporter;
@@ -69,6 +70,25 @@ export async function analyzeWebsite(
     staticUsed = true;
   } catch (err) {
     warnings.push(`Static analysis failed: ${(err as Error).message}`);
+  }
+
+  if (options.graphqlIntrospection && !run.shouldStop?.()) {
+    const graphqlUrls = Array.from(
+      new Set(
+        observed
+          .filter((o) => classifyApiKind(o.url, o.resourceType) === "graphql")
+          .map((o) => o.url.split("?")[0])
+      )
+    );
+    if (graphqlUrls.length > 0) {
+      reporter.setPhase?.("GraphQL introspection");
+      try {
+        const intro = await introspectGraphql(graphqlUrls, options.extraHeaders, reporter);
+        observed.push(...intro);
+      } catch (err) {
+        warnings.push(`GraphQL introspection failed: ${(err as Error).message}`);
+      }
+    }
   }
 
   reporter.setPhase?.("Normalizing endpoints");

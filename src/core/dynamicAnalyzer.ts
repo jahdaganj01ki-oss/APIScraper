@@ -1,4 +1,11 @@
-import type { Browser, BrowserContext, Page, Response as PWResponse } from "playwright";
+import { existsSync } from "node:fs";
+import type {
+  Browser,
+  BrowserContext,
+  Page,
+  Response as PWResponse,
+  WebSocket as PWWebSocket
+} from "playwright";
 import type {
   AnalyzeOptions,
   HttpMethod,
@@ -6,6 +13,54 @@ import type {
   ProgressReporter
 } from "./types";
 import { normalizeUrl, safeParseUrl, sameRegistrableHost, isStaticAsset } from "./urlUtils";
+import { makeRobotsChecker } from "./robots";
+
+const delay = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
+function captureWebSocket(
+  ws: PWWebSocket,
+  fromPage: string,
+  observed: ObservedRequest[]
+): void {
+  try {
+    const url = ws.url();
+    if (/^wss?:/i.test(url)) {
+      observed.push({
+        url,
+        method: "GET",
+        resourceType: "websocket",
+        source: "dynamic",
+        fromPage
+      });
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
+async function fetchRobotsChecker(
+  startUrl: string,
+  headers: Record<string, string>,
+  respect: boolean
+): Promise<(pathname: string) => boolean> {
+  if (!respect) {
+    return () => true;
+  }
+  const origin = safeParseUrl(startUrl)?.origin;
+  if (!origin) {
+    return () => true;
+  }
+  try {
+    const res = await fetch(`${origin}/robots.txt`, { headers });
+    if (!res.ok) {
+      return () => true;
+    }
+    return makeRobotsChecker(await res.text(), "*");
+  } catch {
+    return () => true;
+  }
+}
 
 export interface DynamicResult {
   observed: ObservedRequest[];
@@ -155,13 +210,28 @@ export async function dynamicAnalyze(
   let pagesVisited = 0;
   try {
     browser = await pw.chromium.launch({ headless: options.headless });
+    let storageState: string | undefined;
+    if (options.storageStatePath) {
+      if (existsSync(options.storageStatePath)) {
+        storageState = options.storageStatePath;
+        reporter.log(`[dynamic] using storageState ${options.storageStatePath}`);
+      } else {
+        reporter.log(`[dynamic] storageState not found: ${options.storageStatePath}`);
+      }
+    }
     context = await browser.newContext({
       extraHTTPHeaders:
         Object.keys(options.extraHeaders).length > 0 ? options.extraHeaders : undefined,
-      ignoreHTTPSErrors: true
+      ignoreHTTPSErrors: true,
+      storageState
     });
 
     const startOrigin = safeParseUrl(options.startUrl);
+    const isAllowed = await fetchRobotsChecker(
+      options.startUrl,
+      options.extraHeaders,
+      options.respectRobots
+    );
     const visited = new Set<string>();
     const queue: Array<{ url: string; depth: number }> = [
       { url: options.startUrl, depth: 0 }
@@ -177,12 +247,20 @@ export async function dynamicAnalyze(
       if (visited.has(canonical)) {
         continue;
       }
+      // Always allow the start URL; honor robots.txt for crawled links.
+      if (depth > 0 && !isAllowed(safeParseUrl(canonical)?.pathname ?? "/")) {
+        reporter.log(`[dynamic] robots.txt disallows ${canonical}`);
+        continue;
+      }
       visited.add(canonical);
 
       const page = await context.newPage();
       const onResponse = (response: PWResponse) =>
         void captureResponse(response, canonical, observed);
+      const onWebSocket = (ws: PWWebSocket) =>
+        captureWebSocket(ws, canonical, observed);
       page.on("response", onResponse);
+      page.on("websocket", onWebSocket);
 
       try {
         reporter.log(`[dynamic] visiting (${pagesVisited + 1}/${options.maxPages}) ${canonical}`);
@@ -204,7 +282,8 @@ export async function dynamicAnalyze(
           for (const link of links) {
             if (
               !visited.has(link.split("#")[0]) &&
-              sameRegistrableHost(link, options.startUrl)
+              sameRegistrableHost(link, options.startUrl) &&
+              isAllowed(safeParseUrl(link)?.pathname ?? "/")
             ) {
               queue.push({ url: link, depth: depth + 1 });
             }
@@ -214,7 +293,12 @@ export async function dynamicAnalyze(
         reporter.log(`[dynamic] error on ${canonical}: ${(err as Error).message}`);
       } finally {
         page.off("response", onResponse);
+        page.off("websocket", onWebSocket);
         await page.close().catch(() => undefined);
+      }
+
+      if (options.crawlDelayMs > 0 && queue.length > 0) {
+        await delay(options.crawlDelayMs);
       }
     }
 

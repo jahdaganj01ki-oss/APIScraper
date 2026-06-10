@@ -11,7 +11,10 @@ const baseOptions: AnalyzeOptions = {
   waitMs: 0,
   includeThirdParty: true,
   includeStaticAssets: false,
-  extraHeaders: {}
+  extraHeaders: {},
+  respectRobots: true,
+  crawlDelayMs: 0,
+  graphqlIntrospection: false
 };
 
 describe("buildEndpoints", () => {

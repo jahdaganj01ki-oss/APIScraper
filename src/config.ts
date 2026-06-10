@@ -14,6 +14,10 @@ export function readOptions(startUrl: string): AnalyzeOptions {
     waitMs: cfg.get<number>("dynamic.waitMs", 3500),
     includeThirdParty: cfg.get<boolean>("includeThirdParty", true),
     includeStaticAssets: cfg.get<boolean>("includeStaticAssets", false),
-    extraHeaders: typeof extraHeaders === "object" ? extraHeaders : {}
+    extraHeaders: typeof extraHeaders === "object" ? extraHeaders : {},
+    storageStatePath: cfg.get<string>("dynamic.storageState", "") || undefined,
+    respectRobots: cfg.get<boolean>("crawl.respectRobots", true),
+    crawlDelayMs: cfg.get<number>("crawl.delayMs", 250),
+    graphqlIntrospection: cfg.get<boolean>("graphql.introspection", true)
   };
 }
